@@ -5,8 +5,8 @@
 
       let gl;
       let IsPause;
-      let startTime, zoom, x0, y0, CanvW, CanvH;
-      let col1, col2, iterations;
+      let startTime, zoom, x0, y0;
+      let frag_col, back_col, iterations;
 
       /* Fragment shader source */
       const shaderFs = `#version 300 es
@@ -21,8 +21,8 @@
         uniform float u_Width;
         uniform float u_Height;
 
-        uniform vec3 u_col1;
-        uniform vec3 u_col2;
+        uniform vec3 u_frag_col;
+        uniform vec3 u_back_col;
 
         uniform int u_iterations;
 
@@ -73,10 +73,10 @@
           float x = gl_FragCoord.x, y = gl_FragCoord.y;
           float stime = 102.0 * sin(2.0 * 3.0 * u_time / 1000.0);
 
-          float newX = 2.0 * (u_view_x + u_Width / (2.0 * u_zoom) * (2.0 * x / u_Width - 1.0)) / u_Width - 1.0;
-          float newY = 2.0 * (u_view_y + u_Height / (2.0 * u_zoom) * (2.0 * y / u_Height - 1.0)) / u_Height - 1.0;
+          float nX = 2.0 * (u_view_x + u_Width / (2.0 * u_zoom) * (2.0 * x / u_Width - 1.0)) / u_Width - 1.0;
+          float nY = 2.0 * (u_view_y + u_Height / (2.0 * u_zoom) * (2.0 * y / u_Height - 1.0)) / u_Height - 1.0;
 
-          vec2 Z = vec2(newX, newY);   
+          vec2 Z = vec2(nX, nY);   
           vec2 C = vec2(0.35 + 0.047 * sin(stime * 0.001), 0.40 + 0.03 * sin(stime * 0.001));
 
           float n = Julia(Z, C) / float(u_iterations) * 4.0;
@@ -87,7 +87,7 @@
           n = NutonT(Z, C);     
           */ 
 
-          o_color = vec4(u_col2 + (u_col1 - u_col2) * n, 1.0);
+          o_color = vec4(u_back_col + (u_frag_col - u_back_col) * n, 1.0);
         }`;
 
       /* Vertex shader source */
@@ -126,7 +126,7 @@
       let u_time_location, u_view_x_location, u_view_y_location;
       let u_zoom_location;
       let u_Width_location, u_Height_location, u_mX_location, u_mY_location;
-      let  u_col1_location, u_col2_location, u_iterations_location;
+      let  u_frag_col_location, u_back_col_location, u_iterations_location;
 
       function initShaders() 
       {
@@ -145,16 +145,15 @@
         gl.useProgram(program);
 
         u_time_location = gl.getUniformLocation(program, "u_time");
-
-        u_view_x_location = gl.getUniformLocation(program, "u_view_x");
-        u_view_y_location = gl.getUniformLocation(program, "u_view_y");
-        u_Width_location = gl.getUniformLocation(program, "u_Width");
-        u_Height_location = gl.getUniformLocation(program, "u_Height");
-        
         u_zoom_location = gl.getUniformLocation(program, "u_zoom");
         
-        u_col1_location = gl.getUniformLocation(program, "u_col1");
-        u_col2_location = gl.getUniformLocation(program, "u_col2");
+        u_Width_location = gl.getUniformLocation(program, "u_Width");
+        u_Height_location = gl.getUniformLocation(program, "u_Height");
+        u_view_x_location = gl.getUniformLocation(program, "u_view_x");
+        u_view_y_location = gl.getUniformLocation(program, "u_view_y");
+        
+        u_frag_col_location = gl.getUniformLocation(program, "u_frag_col");
+        u_back_col_location = gl.getUniformLocation(program, "u_back_col");
         u_iterations_location = gl.getUniformLocation(program, "u_iterations");
       }
 
@@ -165,17 +164,12 @@
       {
         vertexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        vertices = 
-        [
-          -1, -1,
-          3, -1,
-          -1, 3
-        ];
+        vertices = [-1, -1, 3, -1, -1, 3];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
       }
 
       let MousePres = false; 
-      let saveX = -1, saveY = -1;
+      let saveX = -18, saveY = -18;
 
       function onStart() 
       {
@@ -185,7 +179,7 @@
         canvas.onmouseup = (ev) => { MousePres = false; }
         canvas.onmousemove = (ev) =>
         {
-          if (saveX == -1 || saveY == -1)
+          if (saveX == -18 || saveY == -18)
           {
             saveX = ev.x;
             saveY = ev.y;
@@ -201,36 +195,29 @@
         canvas.onwheel = (ev) => 
         { 
           zoom *= 1 - ev.deltaY / 1800; 
-          x0 -= (saveX / zoom - CanvW / (2 * zoom)) * ev.deltaY / 1800;
-          y0 += (saveY / zoom - CanvH / (2 * zoom)) * ev.deltaY / 1800;
+          x0 -= (saveX / zoom - gl.viewportWidth / (2 * zoom)) * ev.deltaY / 1800;
+          y0 += (saveY / zoom - gl.viewportHeight / (2 * zoom)) * ev.deltaY / 1800;
         }
-        canvas.onresize = (ev) => 
-        {
-          CanvW = ev.width;
-          CanvH = ev.height;
-        }
-
+        
         initGL(canvas);
         initShaders();
         initBuffer();
 
         startTime = (new Date()).getMilliseconds();
-        CanvW = canvas.width;
-        CanvH = canvas.height;
-        x0 = CanvW / 2;
-        y0 = CanvH / 2;
+        x0 = gl.viewportWidth / 2;
+        y0 = gl.viewportHeight / 2;
         zoom = 1.0;
         IsPause = false;
-        col1 = document.getElementById("picker1").value;
-        col2 = document.getElementById("picker2").value;
+        frag_col = document.getElementById("picker1").value;
+        back_col = document.getElementById("picker2").value;
         iterations = document.getElementById("slider").value;
         document.getElementById("picker1").onchange = function()
         {
-          col1 = this.value; 
+          frag_col = this.value; 
         };
         document.getElementById("picker2").onchange = function()
         {
-          col2 = this.value;
+          back_col = this.value;
         };
         document.getElementById("slider").onchange = function()
         {
@@ -264,12 +251,12 @@
         gl.uniform1f(u_view_x_location, x0);
         gl.uniform1f(u_view_y_location, y0);
         gl.uniform1f(u_zoom_location, zoom);
-        gl.uniform1f(u_Width_location, CanvW);
-        gl.uniform1f(u_Height_location, CanvH);
+        gl.uniform1f(u_Width_location, gl.viewportWidth);
+        gl.uniform1f(u_Height_location, gl.viewportHeight);
         gl.uniform1f(u_mX_location, saveX);
         gl.uniform1f(u_mY_location, saveY);
-        gl.uniform3fv(u_col1_location, hexStringToVec3(col1));
-        gl.uniform3fv(u_col2_location, hexStringToVec3(col2));
+        gl.uniform3fv(u_frag_col_location, hexStringToVec3(frag_col));
+        gl.uniform3fv(u_back_col_location, hexStringToVec3(back_col));
         gl.uniform1i(u_iterations_location, iterations);
 
         gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -291,13 +278,8 @@
         <p style="font-size:80px;">
           <b><i><ins>CGSG FOREVER!</ins></i></b>
         </p>
-        <p1 style = "font-size:30px;"><strong>Fractal main color</strong></p1>
-        <input id = "picker1" type = "color" value = "#8d47d8" style = "width:102px; height:30px;"/>
-        <br><br>
-        <p1 style = "font-size:30px;"><strong>Background color</strong></p1>
-        <input id = "picker2" type = "color" value = "#080308" style = "width:102px; height:30px;"/>
-        <br><br>
         <span>
+        <br><br>
         <p1 style = "font-size:30px; margin-right: 8px;"><strong>Iterations</strong></p1>
         <p1><strong><i>1</p1>
         <input
@@ -309,8 +291,14 @@
           step = 1
           style = "width: 300px;"/>
         <p1>1020</i></strong></p1>
-        </span>  
-        <br><br>
+        </span>
+        <br><br><br>
+        <p1 style = "font-size:30px;"><strong>Fractal main color</strong></p1>
+        <input id = "picker1" type = "color" value = "#8d47d8" style = "width:102px; height:30px;"/>
+        <br><br><br>
+        <p1 style = "font-size:30px;"><strong>Background color</strong></p1>
+        <input id = "picker2" type = "color" value = "#080308" style = "width:102px; height:30px;"/>  
+        <br><br><br>
         <button style = "width: 118px; height:60px; font-size:30px;" onclick="IsPause = !IsPause;"><strong>Pause</strong></button>      
       </div>
     </div>

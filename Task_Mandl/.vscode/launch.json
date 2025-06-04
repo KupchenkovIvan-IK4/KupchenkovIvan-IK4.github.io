@@ -10,7 +10,6 @@
             "request": "launch",
             "type": "chrome",
             "url": "http://localhost:8080",
-            //"file":"Z:\\IK4\\SummerPractice\\Task_Mandl\\index.html",
             "webRoot": "${workspaceFolder}",
         }
     ]
