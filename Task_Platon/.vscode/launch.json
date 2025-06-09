@@ -10,7 +10,7 @@
             "request": "launch",
             "name": "Open index.html",
             "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}/dist",
+            "webRoot": "${workspaceFolder}",
             "disableNetworkCache": true
         }
     ]
