@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+    <title>Platon</title>
+    <h1><strong>Platon figures</strong></h1>
+    <head>
+    </head>
+    <body>
+    <div style = "display: flex;">
+      <div>
+        <canvas
+        id = "webgl-canvas"
+        style = "border: 18px solid black;"
+        width = 1047
+        height = 1047
+        ></canvas>
+      </div>
+      <div style = "flex: 50%;">
+        <p style="font-size:47px;">
+          <b><i><ins>CGSG FOREVER!</ins></i></b>
+        </p>
+        <br><br><br>
+        <button style = "width: 300px; height:60px; font-size:30px;" id = "Tetrahedron"><strong>Tetrahedron</strong></button>
+        <br><br><br>
+        <button style = "width: 300px; height:60px; font-size:30px;" id = "Cube"><strong>Cube</strong></button>
+        <br><br><br>
+        <button style = "width: 300px; height:60px; font-size:30px;" id = "Octahedron"><strong>Octahedron</strong></button>
+        <br><br><br>
+        <button style = "width: 300px; height:60px; font-size:30px;" id = "Icosahedron"><strong>Icosahedron</strong></button>
+        <br><br><br>
+        <button style = "width: 300px; height:60px; font-size:30px;" id = "Dodecahedron"><strong>Dodecahedron</strong></button>
+      </div>
+      <div style = "flex: 50%;">
+        <br><br><br><br><br><br><br><br><br><br>
+        <button style = "width: 180px; height:80px; font-size:30px;" id = "Moving"><strong>Move/Stop</strong></button>
+        <br><br><br><br>
+        <button style = "width: 180px; height:47px; font-size:18px;" id = "CamPlusX"><strong>Camera X plus</strong></button>
+        <br><br>
+        <button style = "width: 180px; height:47px; font-size:18px;" id = "CamMinX"><strong>Camera X minus</strong></button>
+        <br><br>
+        <button style = "width: 180px; height:47px; font-size:18px;" id = "CamPlusY"><strong>Camera Y plus</strong></button>
+        <br><br>
+        <button style = "width: 180px; height:47px; font-size:18px;" id = "CamMinY"><strong>Camera Y minus</strong></button>
+        <br><br>
+        <button style = "width: 180px; height:47px; font-size:18px;" id = "CamPlusZ"><strong>Camera Z plus</strong></button>
+        <br><br>
+        <button style = "width: 180px; height:47px; font-size:18px;" id = "CamMinZ"><strong>Camera Z minus</strong></button>
+        <br><br><br>
+        <button style = "width: 180px; height:47px; font-size:18px;" id = "Closer"><strong>Closer</strong></button>
+        <br><br>
+        <button style = "width: 180px; height:47px; font-size:18px;" id = "Further"><strong>Further</strong></button>
+      </div>
+    </div>
+    <script type="module">
+        import { tetrFlagupdate, cubeFlagupdate, octaFlagupdate, icosFlagupdate, dodeFlagupdate, 
+                 movingFlagUpdate, cameraChangeX, cameraChangeY, cameraChangeZ, cameraChange, cameraRotateY, cameraRotateX, startDrag, drag, stopDrag } from "./main.js";
+
+        document.getElementById("webgl-canvas").addEventListener('mousedown', startDrag);
+        document.getElementById("webgl-canvas").addEventListener('mousemove', drag);
+        document.getElementById("webgl-canvas").addEventListener('mouseup', stopDrag);
+
+        document.getElementById("Tetrahedron").addEventListener("click", () => {
+            tetrFlagupdate();
+        })
+        document.getElementById("Cube").addEventListener("click", () => {
+            cubeFlagupdate();
+        })
+        document.getElementById("Octahedron").addEventListener("click", () => {
+            octaFlagupdate();
+        })
+        document.getElementById("Icosahedron").addEventListener("click", () => {
+            icosFlagupdate();
+        })
+        document.getElementById("Dodecahedron").addEventListener("click", () => {
+            dodeFlagupdate();
+        })
+        document.getElementById("Moving").addEventListener("click", () => {
+            movingFlagUpdate();
+        })
+        document.getElementById("CamMinX").addEventListener("click", () => {
+            cameraChangeX(false);
+        })
+        document.getElementById("CamPlusX").addEventListener("click", () => {
+            cameraChangeX(true);
+        })
+        document.getElementById("CamPlusY").addEventListener("click", () => {
+            cameraChangeY(true);
+        })
+        document.getElementById("CamMinY").addEventListener("click", () => {
+            cameraChangeY(false);
+        })
+        document.getElementById("CamPlusZ").addEventListener("click", () => {
+            cameraChangeZ(true);
+        })
+        document.getElementById("CamMinZ").addEventListener("click", () => {
+            cameraChangeZ(false);
+        })
+        document.getElementById("Closer").addEventListener("click", () => {
+            cameraChange(true);
+        })
+        document.getElementById("Further").addEventListener("click", () => {
+            cameraChange(false);
+        })
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'w' || event.key === 'W') {
+              cameraRotateY(true);
+            } else if (event.key === 's' || event.key === 'S') {
+              cameraRotateY(false);
+            } else if (event.key === 'd' || event.key === 'D') {
+              cameraRotateX(true);
+            } else if (event.key === 'a' || event.key === 'A') {
+              cameraRotateX(false);
+            }
+          }
+        )
+    </script>
+  </body>
+</html>
