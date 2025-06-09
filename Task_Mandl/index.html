@@ -4,7 +4,7 @@
     <script type = "text/javascript">
 
       let gl;
-      let IsPause;
+      let isPause;
       let startTime, zoom, x0, y0;
       let frag_col, back_col, iterations;
 
@@ -14,17 +14,17 @@
         layout (location = 0) out vec4 o_color;
 
         uniform float u_time;
-        uniform float u_view_x;
-        uniform float u_view_y;
-        uniform float u_zoom;
+        uniform float cx;
+        uniform float cy;
+        uniform float zoom;
 
-        uniform float u_Width;
-        uniform float u_Height;
+        uniform float width;
+        uniform float height;
 
-        uniform vec3 u_frag_col;
-        uniform vec3 u_back_col;
+        uniform vec3 frak_col;
+        uniform vec3 back_col;
 
-        uniform int u_iterations;
+        uniform int iterations;
 
         float Mandelbrot( vec2 Z )
         {
@@ -32,7 +32,7 @@
 
             vec2 Z0 = Z;
 
-            while (length(Z) < 4.0 && n < u_iterations)
+            while (length(Z) < 4.0 && n < iterations)
             {
               Z = vec2(Z.x * Z.x - Z.y * Z.y, Z.x * Z.y + Z.x * Z.y) + Z0;
               n++;
@@ -44,7 +44,7 @@
         {
           int n = 0;
 
-          while (length(Z) < 4.0 && n < u_iterations)
+          while (length(Z) < 4.0 && n < iterations)
           {
             Z = C + vec2(Z.x * Z.x - Z.y * Z.y, 2.0 * Z.x * Z.y);
             n++;
@@ -56,7 +56,7 @@
         {
           int n = 0;
           
-          while (length(Z) < 4.0 && n < u_iterations)
+          while (length(Z) < 4.0 && n < iterations)
           {
             vec2 Z1 = vec2(Z.x * Z.x - Z.y * Z.y, Z.x * Z.y + Z.x * Z.y);
             vec2 Z2 = vec2(Z.x * Z1.x - Z.y * Z1.y - 1.0 / 3.0, Z.x * Z1.y + Z1.x * Z.y);
@@ -73,21 +73,21 @@
           float x = gl_FragCoord.x, y = gl_FragCoord.y;
           float stime = 102.0 * sin(2.0 * 3.0 * u_time / 1000.0);
 
-          float nX = 2.0 * (u_view_x + u_Width / (2.0 * u_zoom) * (2.0 * x / u_Width - 1.0)) / u_Width - 1.0;
-          float nY = 2.0 * (u_view_y + u_Height / (2.0 * u_zoom) * (2.0 * y / u_Height - 1.0)) / u_Height - 1.0;
+          float nX = 2.0 * (cx + width / (2.0 * zoom) * (2.0 * x / width - 1.0)) / width - 1.0;
+          float nY = 2.0 * (cy + height / (2.0 * zoom) * (2.0 * y / height - 1.0)) / height - 1.0;
 
           vec2 Z = vec2(nX, nY);   
           vec2 C = vec2(0.35 + 0.047 * sin(stime * 0.001), 0.40 + 0.03 * sin(stime * 0.001));
 
-          float n = Julia(Z, C) / float(u_iterations) * 4.0;
+          float n = Julia(Z, C) / float(iterations) * 4.0;
           /*
-          n = Mandelbrot(Z) / float(u_iterations) * 4.0;
+          n = Mandelbrot(Z) / float(iterations) * 4.0;
           
           C = vec2(0.30 + 0.1 * abs(sin(stime / 3.0) + 1.0), 0.47 + 0.1 * sin(stime / 3.0) + 0.1);
           n = NutonT(Z, C);     
           */ 
 
-          o_color = vec4(u_back_col + (u_frag_col - u_back_col) * n, 1.0);
+          o_color = vec4(back_col + (frak_col - back_col) * n, 1.0);
         }`;
 
       /* Vertex shader source */
@@ -123,10 +123,10 @@
         gl.viewportHeight = canvas.height;
       }
 
-      let u_time_location, u_view_x_location, u_view_y_location;
-      let u_zoom_location;
-      let u_Width_location, u_Height_location, u_mX_location, u_mY_location;
-      let  u_frag_col_location, u_back_col_location, u_iterations_location;
+      let u_time_location, center_x_location, center_y_location;
+      let zoom_location;
+      let width_location, height_location;
+      let  frak_col_location, back_col_location, iterations_location;
 
       function initShaders() 
       {
@@ -145,16 +145,17 @@
         gl.useProgram(program);
 
         u_time_location = gl.getUniformLocation(program, "u_time");
-        u_zoom_location = gl.getUniformLocation(program, "u_zoom");
         
-        u_Width_location = gl.getUniformLocation(program, "u_Width");
-        u_Height_location = gl.getUniformLocation(program, "u_Height");
-        u_view_x_location = gl.getUniformLocation(program, "u_view_x");
-        u_view_y_location = gl.getUniformLocation(program, "u_view_y");
+        zoom_location = gl.getUniformLocation(program, "zoom");
         
-        u_frag_col_location = gl.getUniformLocation(program, "u_frag_col");
-        u_back_col_location = gl.getUniformLocation(program, "u_back_col");
-        u_iterations_location = gl.getUniformLocation(program, "u_iterations");
+        width_location = gl.getUniformLocation(program, "width");
+        height_location = gl.getUniformLocation(program, "height");
+        center_x_location = gl.getUniformLocation(program, "cx");
+        center_y_location = gl.getUniformLocation(program, "cy");
+        
+        frak_col_location = gl.getUniformLocation(program, "frak_col");
+        back_col_location = gl.getUniformLocation(program, "back_col");
+        iterations_location = gl.getUniformLocation(program, "iterations");
       }
 
       /* Vertex buffer object */
@@ -194,9 +195,9 @@
         }
         canvas.onwheel = (ev) => 
         { 
-          zoom *= 1 - ev.deltaY / 1800; 
-          x0 -= (saveX / zoom - gl.viewportWidth / (2 * zoom)) * ev.deltaY / 1800;
-          y0 += (saveY / zoom - gl.viewportHeight / (2 * zoom)) * ev.deltaY / 1800;
+          zoom *= 1 - ev.deltaY / 1847; 
+          x0 -= (saveX - gl.viewportWidth / 2) / zoom * ev.deltaY / 1847;
+          y0 += (saveY - gl.viewportHeight / 2) / zoom * ev.deltaY / 1847;
         }
         
         initGL(canvas);
@@ -207,7 +208,7 @@
         x0 = gl.viewportWidth / 2;
         y0 = gl.viewportHeight / 2;
         zoom = 1.0;
-        IsPause = false;
+        isPause = false;
         frag_col = document.getElementById("picker1").value;
         back_col = document.getElementById("picker2").value;
         iterations = document.getElementById("slider").value;
@@ -244,20 +245,18 @@
         gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
         timeFromStart = (new Date()).getMilliseconds() - startTime;
-        if (!IsPause)
+        if (!isPause)
         {
           gl.uniform1f(u_time_location, timeFromStart);
         }
-        gl.uniform1f(u_view_x_location, x0);
-        gl.uniform1f(u_view_y_location, y0);
-        gl.uniform1f(u_zoom_location, zoom);
-        gl.uniform1f(u_Width_location, gl.viewportWidth);
-        gl.uniform1f(u_Height_location, gl.viewportHeight);
-        gl.uniform1f(u_mX_location, saveX);
-        gl.uniform1f(u_mY_location, saveY);
-        gl.uniform3fv(u_frag_col_location, hexStringToVec3(frag_col));
-        gl.uniform3fv(u_back_col_location, hexStringToVec3(back_col));
-        gl.uniform1i(u_iterations_location, iterations);
+        gl.uniform1f(center_x_location, x0);
+        gl.uniform1f(center_y_location, y0);
+        gl.uniform1f(zoom_location, zoom);
+        gl.uniform1f(width_location, gl.viewportWidth);
+        gl.uniform1f(height_location, gl.viewportHeight);
+        gl.uniform3fv(frak_col_location, hexStringToVec3(frag_col));
+        gl.uniform3fv(back_col_location, hexStringToVec3(back_col));
+        gl.uniform1i(iterations_location, iterations);
 
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         window.requestAnimationFrame(drawScene);
@@ -294,12 +293,12 @@
         </span>
         <br><br><br>
         <p1 style = "font-size:30px;"><strong>Fractal main color</strong></p1>
-        <input id = "picker1" type = "color" value = "#8d47d8" style = "width:102px; height:30px;"/>
+        <input id = "picker1" type = "color" value = "#ffaf00" style = "width:102px; height:30px;"/>
         <br><br><br>
         <p1 style = "font-size:30px;"><strong>Background color</strong></p1>
         <input id = "picker2" type = "color" value = "#080308" style = "width:102px; height:30px;"/>  
         <br><br><br>
-        <button style = "width: 118px; height:60px; font-size:30px;" onclick="IsPause = !IsPause;"><strong>Pause</strong></button>      
+        <button style = "width: 118px; height:60px; font-size:30px;" onclick="isPause = !isPause;"><strong>Pause</strong></button>      
       </div>
     </div>
   </body>
